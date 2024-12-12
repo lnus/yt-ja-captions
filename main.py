@@ -5,7 +5,8 @@ from captions import tagging
 # TODO: Add FastAPI maybe, not sure /shrug
 
 if __name__ == "__main__":
-    video_id = "ueEz7J2uRzs"
+    # video_id = "ueEz7J2uRzs"
+    video_id = "7J5aS_pcBj4"
     metadata = video.get_video_metadata(video_id)
     captions = video.get_captions(video_id)
     out = "test.json"
@@ -17,9 +18,9 @@ if __name__ == "__main__":
     print(metadata.uploader)
     print(metadata.upload_date)
 
-    print(
-        f"Captions\nTranslated: {captions.translated}\nAuto-generated: {captions.auto_generated}"
-    )
+    # print(
+    #     f"Captions\nTranslated: {captions.translated}\nAuto-generated: {captions.auto_generated}"
+    # )
 
     tagging.analyze_subtitles(captions)
 

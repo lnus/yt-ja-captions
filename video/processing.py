@@ -4,7 +4,8 @@ from typing import Optional, List, Callable
 from yt_dlp import YoutubeDL
 from youtube_transcript_api import YouTubeTranscriptApi as yta
 from enum import Enum, auto
-import re
+from ftfy import fix_encoding
+import unicodedata
 
 
 class TranscriptType(Enum):
@@ -31,15 +32,7 @@ class TranscriptSegment:
 
     @classmethod
     def from_dict(cls, data: dict) -> "TranscriptSegment":
-        # Remove zero-width spaces and other invisible unicode characters
-        text = data["text"]
-
-        # Remove various Unicode whitespace and control characters
-        text = re.sub(
-            r"[\u200b\u200c\u200d\ufeff\u2060\u2061\u2062\u2063\u2064]+", "", text
-        )
-        # Remove regular whitespace from start/end
-        text = text.strip()
+        text = fix_encoding(data["text"])
 
         return cls(text=text, start=data["start"], duration=data["duration"])
 
@@ -189,6 +182,7 @@ def get_captions(video_id: str, lang_code: str = "ja") -> TranscriptResult:
         raise ValueError("Something went wrong terribly, this is not a value error")
 
     segment_dicts = transcript.fetch()
+    print(segment_dicts)
     segments = [TranscriptSegment.from_dict(seg) for seg in segment_dicts]
 
     return TranscriptResult(
