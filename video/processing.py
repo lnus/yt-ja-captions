@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List, Callable, Any
+from typing import Optional, List, Callable
 from yt_dlp import YoutubeDL
 from youtube_transcript_api import YouTubeTranscriptApi as yta
 from enum import Enum, auto
+import re
 
 
 class TranscriptType(Enum):
@@ -23,8 +24,29 @@ class TranscriptMethod:
 
 
 @dataclass
+class TranscriptSegment:
+    text: str
+    start: float
+    duration: float
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "TranscriptSegment":
+        # Remove zero-width spaces and other invisible unicode characters
+        text = data["text"]
+
+        # Remove various Unicode whitespace and control characters
+        text = re.sub(
+            r"[\u200b\u200c\u200d\ufeff\u2060\u2061\u2062\u2063\u2064]+", "", text
+        )
+        # Remove regular whitespace from start/end
+        text = text.strip()
+
+        return cls(text=text, start=data["start"], duration=data["duration"])
+
+
+@dataclass
 class TranscriptResult:
-    segments: Optional[Any]  # TODO: Explicit type from YTA, can't find it
+    segments: List[TranscriptSegment]
     auto_generated: bool
     translated: bool
 
@@ -163,8 +185,14 @@ def get_captions(video_id: str, lang_code: str = "ja") -> TranscriptResult:
         except Exception:
             print(f"Did not find {method.type.name.lower()} transcript.")
 
+    if not transcript:
+        raise ValueError("Something went wrong terribly, this is not a value error")
+
+    segment_dicts = transcript.fetch()
+    segments = [TranscriptSegment.from_dict(seg) for seg in segment_dicts]
+
     return TranscriptResult(
-        segments=transcript.fetch() if transcript else None,
+        segments=segments,
         auto_generated=auto_generated,
         translated=translated,
     )

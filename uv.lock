@@ -59,6 +59,31 @@ wheels = [
 ]
 
 [[package]]
+name = "fugashi"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/69/bb037690c3cc218a139ae89afaf0b099814e7aff570b28577aa0ef1a06f0/fugashi-1.4.0.tar.gz", hash = "sha256:443880fa975defc3194f524fbd6cdbcd32776fa66d573d07ccec9edb76cd5271", size = 339049 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/41/326bc6f789fcfc8ec648c07afee9f8094c549823e5bd6c7a155bc7a3cb3e/fugashi-1.4.0-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:eb88cb765c5d7c9bd5f01e179a98262970c3a4d3f14ee39daab641a6d89870c2", size = 562175 },
+    { url = "https://files.pythonhosted.org/packages/c3/21/0833eed9766cca63dada5e12cef4ed960675e44148b477c21ef3d2acc466/fugashi-1.4.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:08e965ee31782d8324e0aecb7b03c36db79a999f573f8fdc53960643c2637050", size = 507108 },
+    { url = "https://files.pythonhosted.org/packages/f4/72/a9c040fb56583b1733f55e5386fbab3df738727aa482590f01c4369576a9/fugashi-1.4.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:44dd186fd5fbe295d2f5613f528ec8e765c93c31138adc65be0f391e0560da2b", size = 503068 },
+    { url = "https://files.pythonhosted.org/packages/12/aa/01269cf238f79890308331993b6822b1925ccc48c816aac4e91c8d95b6a5/fugashi-1.4.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:04ef5a3537bf2a3c5255b82f816e30f86ffc4711777357a0104a043753b84e82", size = 675487 },
+    { url = "https://files.pythonhosted.org/packages/c8/82/48d6388a3d379cf6fc91ee597eec2e7789dd14d0c74aac24288056b2678e/fugashi-1.4.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c5e383c5fac4addb0203e022944df1a0c49859a64921af83ea9591da98211501", size = 697548 },
+    { url = "https://files.pythonhosted.org/packages/8d/f9/69b6ea8bd1958822c8a04fa3a9d2d1d591e745f169621d3c57864f3b1a46/fugashi-1.4.0-cp312-cp312-win_amd64.whl", hash = "sha256:cb63079142cb9c9ca98c79ba487d58e169dde8750318c38d5fab8e00ac461e2f", size = 512269 },
+    { url = "https://files.pythonhosted.org/packages/51/a4/0aef3c27441b080bb526db74d007d05f42376de101d8d9995df86d3a44ff/fugashi-1.4.0-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:8b5e43ef6532c90ad3afac816fe5c63f8613c66119b28aeafdfa442abc4e5735", size = 560512 },
+    { url = "https://files.pythonhosted.org/packages/15/4b/9d021385839b3e3b17a477d34dba81fe28bf15632f49ab977d8aeb8b117f/fugashi-1.4.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:322d357c446c1b2eba42f8170fc3c1094d78f08a13dbf060a08e58c7cdebcf42", size = 506320 },
+    { url = "https://files.pythonhosted.org/packages/a5/99/30af27297ba8a386de9091968155fbbee54f3efde58c4ceb61b28c439262/fugashi-1.4.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8fe382c159c2afb6dc3c653b169b9efe1699a7701ab23e5e019539058e5d06db", size = 502341 },
+    { url = "https://files.pythonhosted.org/packages/d6/43/64685e4d47599bf15c285fa1f9c3a1d0f86c1a3c8427e051ad17d8f9f22f/fugashi-1.4.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0cca9a9ecacb5269598764a56ab73b883001b93ab726032962d4d2d416b76c7b", size = 672015 },
+    { url = "https://files.pythonhosted.org/packages/6b/49/9ebf43cb093bf68ad97de098ced3e9cc42c0c5da4ff11de4115c040cc891/fugashi-1.4.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:016d003de8db2b7b67a6ffaf74915cee8f717c3aa7a66b78acf30c5b13e0e9bc", size = 693685 },
+    { url = "https://files.pythonhosted.org/packages/f3/37/8f56f6eb7d4a487d1b737f4fcc41e25c1f61c9a6ae9adb49581f151d8ef8/fugashi-1.4.0-cp313-cp313-win_amd64.whl", hash = "sha256:99328a498150cfc39e4ac574a1431a24f967033420f4f92b4ade24aab0271ea2", size = 512024 },
+]
+
+[package.optional-dependencies]
+unidic-lite = [
+    { name = "unidic-lite" },
+]
+
+[[package]]
 name = "idna"
 version = "3.10"
 source = { registry = "https://pypi.org/simple" }
@@ -72,12 +97,14 @@ name = "imm-cap"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "fugashi", extra = ["unidic-lite"] },
     { name = "youtube-transcript-api" },
     { name = "yt-dlp" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "fugashi", extras = ["unidic-lite"], specifier = ">=1.4.0" },
     { name = "youtube-transcript-api", specifier = ">=0.6.3" },
     { name = "yt-dlp", specifier = ">=2024.12.6" },
 ]
@@ -96,6 +123,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/63/70/2bf7780ad2d390a8d
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f9/9b/335f9764261e915ed497fcdeb11df5dfd6f7bf257d4a6a2a686d80da4d54/requests-2.32.3-py3-none-any.whl", hash = "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6", size = 64928 },
 ]
+
+[[package]]
+name = "unidic-lite"
+version = "1.0.8"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/55/2b/8cf7514cb57d028abcef625afa847d60ff1ffbf0049c36b78faa7c35046f/unidic-lite-1.0.8.tar.gz", hash = "sha256:db9d4572d9fdd4d00a97949d4b0741ec480ee05a7e7e2e32f547500dae27b245", size = 47356746 }
 
 [[package]]
 name = "urllib3"
