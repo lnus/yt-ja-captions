@@ -1,6 +1,7 @@
 from collections import Counter
 from dataclasses import dataclass
 from typing import List
+import re
 
 # TODO: Type ignore is bad, but pyrightconfig.json wasn't registering, too lazy to fix rn
 # Proposed solution: Uninstall pyright :) ruff is such a chill guy
@@ -22,10 +23,28 @@ class TokenInfo:
 
 @dataclass
 class SubtitleAnalysis:
-    token_frequency: Counter  # Raw token frequency
-    pos_frequency: Counter  # Part of speech frequency
-    dictionary_form_frequency: Counter  # Base form frequency
-    tokens: List[TokenInfo]  # All tokens with their information
+    token_frequency: Counter
+    pos_frequency: Counter
+    dictionary_form_frequency: Counter
+    kanji_compound_frequency: Counter
+    content_word_frequency: Counter
+    tokens: List[TokenInfo]
+
+
+# Helper functions to produce more interesting data than that
+# のwas the most common word
+def is_kanji(char: str) -> bool:
+    return re.match(r"[\u4e00-\u9faf]", char) is not None
+
+
+def is_content_word(pos: str) -> bool:
+    """Check if the part of speech represents a content word."""
+    content_pos = {"名詞", "動詞", "形容詞", "形状詞", "副詞"}
+    return pos in content_pos
+
+
+def contains_kanji(text: str) -> bool:
+    return any(is_kanji(char) for char in text)
 
 
 # This function was written at 2AM with help from Claude 3.5 Sonnet, it was very helpful
@@ -34,6 +53,8 @@ def analyze_subtitles(transcript: TranscriptResult):
     token_freq = Counter()
     pos_freq = Counter()
     dictionary_freq = Counter()
+    kanji_compound_freq = Counter()
+    content_word_freq = Counter()
     all_tokens: List[TokenInfo] = []
 
     for segment in transcript.segments:
@@ -65,11 +86,20 @@ def analyze_subtitles(transcript: TranscriptResult):
             token_freq[token.surface] += 1
             pos_freq[token.feature.pos1] += 1
             dictionary_freq[token_info.dictionary_form] += 1
+
+            if contains_kanji(token.surface):
+                kanji_compound_freq[token.surface] += 1
+
+            if is_content_word(token.feature.pos1):
+                content_word_freq[token.surface] += 1
+
             all_tokens.append(token_info)
 
     return SubtitleAnalysis(
         token_frequency=token_freq,
         pos_frequency=pos_freq,
         dictionary_form_frequency=dictionary_freq,
+        kanji_compound_frequency=kanji_compound_freq,
+        content_word_frequency=content_word_freq,
         tokens=all_tokens,
     )
