@@ -2,7 +2,7 @@
 # Proposed solution: Uninstall pyright :) ruff is such a chill guy
 from fugashi import Tagger  # type: ignore
 from collections import Counter
-from video.processing import TranscriptResult  # TODO: This import seems ugly
+from fetcher import TranscriptResult  # TODO: This import seems ugly
 
 tagger = Tagger("-Owakati")
 
