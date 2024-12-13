@@ -40,7 +40,7 @@ class TranscriptSegment:
                 duration = entry.get("dDurationMs", 0) / 1000.0
 
             return cls(
-                text=text.replace("\u200b", "").strip(),
+                text=text,
                 start=start_time,
                 duration=duration,
             )
