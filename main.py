@@ -7,6 +7,18 @@ from captions import tagging
 if __name__ == "__main__":
     # video_id = "ueEz7J2uRzs"
     video_id = "7J5aS_pcBj4"
+    result = video.get_captions(video_id)
+    if result:
+        print(
+            f"Found {'auto-generated' if result.auto_generated else 'manual'} "
+            f"{'translated' if result.translated else 'original'} captions"
+        )
+        for segment in result.segments:
+            print(f"[{segment.start:.2f}s] {segment.text}")
+    else:
+        print("No Japanese captions found")
+
+    exit()
     metadata = video.get_video_metadata(video_id)
     captions = video.get_captions(video_id)
     out = "test.json"

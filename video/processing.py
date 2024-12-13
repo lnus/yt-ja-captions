@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Dict, Any
 from yt_dlp import YoutubeDL
-from youtube_transcript_api import YouTubeTranscriptApi as yta
 from enum import Enum, auto
-from ftfy import fix_encoding
-import unicodedata
+from urllib.request import urlopen
+import json
 
 
 class TranscriptType(Enum):
@@ -22,26 +21,6 @@ class TranscriptMethod:
     args: List[str]
     sets_auto: bool
     sets_translated: bool
-
-
-@dataclass
-class TranscriptSegment:
-    text: str
-    start: float
-    duration: float
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "TranscriptSegment":
-        text = fix_encoding(data["text"])
-
-        return cls(text=text, start=data["start"], duration=data["duration"])
-
-
-@dataclass
-class TranscriptResult:
-    segments: List[TranscriptSegment]
-    auto_generated: bool
-    translated: bool
 
 
 @dataclass
@@ -108,85 +87,150 @@ def get_video_metadata(video_id: str) -> Optional[VideoMetadata]:
         return None
 
 
-def get_captions(video_id: str, lang_code: str = "ja") -> TranscriptResult:
+@dataclass
+class TranscriptSegment:
+    text: str
+    start: float
+    duration: float
+
+    @classmethod
+    def from_subtitle_entry(
+        cls, entry: Dict[str, Any]
+    ) -> Optional["TranscriptSegment"]:
+        try:
+            # Debug print to see the entry structure
+            # print(
+            #     f"Processing entry: {json.dumps(entry, indent=2, ensure_ascii=False)}"
+            # )
+
+            if "segs" in entry:
+                # Handle segmented format
+                text = " ".join(seg["utf8"] for seg in entry["segs"] if "utf8" in seg)
+                start_time = entry.get("tStartMs", 0) / 1000.0
+                duration = entry.get("dDurationMs", 0) / 1000.0
+            elif "aAppend" in entry:
+                # Skip append entries
+                return None
+            else:
+                # Handle standard format
+                text = entry.get("text", "")
+                start_time = entry.get("tStartMs", 0) / 1000.0
+                duration = entry.get("dDurationMs", 0) / 1000.0
+
+            return cls(
+                text=text.replace("\u200b", "").strip(),
+                start=start_time,
+                duration=duration,
+            )
+        except Exception as e:
+            print(f"Error processing entry: {str(e)}")
+            print(
+                f"Problematic entry: {json.dumps(entry, indent=2, ensure_ascii=False)}"
+            )
+            return None
+
+
+@dataclass
+class TranscriptResult:
+    segments: List[TranscriptSegment]
+    auto_generated: bool
+    translated: bool
+
+
+def fetch_subtitle_data(url: str) -> Optional[Dict]:
+    """Fetch and parse subtitle data from a URL."""
+    try:
+        with urlopen(url) as response:
+            return json.loads(response.read())
+    except Exception as e:
+        print(f"Error fetching subtitles: {str(e)}")
+        return None
+
+
+# TODO: Use same youtube instance or something idk, im very tired
+def get_captions(video_id: str) -> Optional[TranscriptResult]:
     """
-    Fetch captions for a YouTube video with fallback options for different transcript types.
+    Extract Japanese captions from a YouTube video, preferring manual captions
+    but falling back to auto-generated or translated ones if necessary.
 
     Args:
         video_id: YouTube video ID
-        lang_code: Language code for the desired captions (default: "ja")
 
     Returns:
-        Tuple containing:
-        - List of transcript dictionaries if successful, None if extraction fails
-        - Boolean indicating if the transcript is auto-generated
-        - Boolean indicating if the transcript is translated
-
-    Raises:
-        ValueError: If video_id is invalid or empty
+        TranscriptResult object if captions are found, None otherwise
     """
-    if not video_id:
-        raise ValueError("Video ID cannot be empty")
+    ydl_opts = {
+        "writesubtitles": True,
+        "subtitleslangs": ["ja"],
+        "skip_download": True,
+        "quiet": True,
+    }
 
-    transcripts = yta.list_transcripts(video_id)
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(video_id, download=False)
+        if not info:
+            return None
 
-    transcript_methods = [
-        TranscriptMethod(
-            type=TranscriptType.MANUAL,
-            func=transcripts.find_manually_created_transcript,
-            args=[lang_code],
-            sets_auto=False,
-            sets_translated=False,
-        ),
-        TranscriptMethod(
-            type=TranscriptType.GENERATED,
-            func=transcripts.find_generated_transcript,
-            args=[lang_code],
-            sets_auto=True,
-            sets_translated=False,
-        ),
-        TranscriptMethod(
-            type=TranscriptType.MANUAL_TRANSLATED,
-            func=transcripts.find_manually_created_transcript,
-            args=["en"],
-            sets_auto=False,
-            sets_translated=True,
-        ),
-        TranscriptMethod(
-            type=TranscriptType.GENERATED_TRANSLATED,
-            func=transcripts.find_transcript,
-            args=["en"],
-            sets_auto=True,
-            sets_translated=True,
-        ),
-    ]
+        # Try to get manual subtitles first
+        if info.get("subtitles") and "ja" in info["subtitles"]:
+            subtitle_info = info["subtitles"]["ja"]
+            for fmt in subtitle_info:
+                if fmt.get("ext") == "json3":
+                    subtitles = fetch_subtitle_data(fmt["url"])
+                    if subtitles and "events" in subtitles:
+                        segments = [
+                            segment
+                            for entry in subtitles["events"]
+                            if (segment := TranscriptSegment.from_subtitle_entry(entry))
+                            is not None
+                        ]
+                        if segments:
+                            return TranscriptResult(
+                                segments=segments,
+                                auto_generated=False,
+                                translated=False,
+                            )
 
-    auto_generated = False
-    translated = False
-    transcript = None
+        # Fall back to automatic captions if available
+        if info.get("automatic_captions") and "ja" in info["automatic_captions"]:
+            auto_info = info["automatic_captions"]["ja"]
+            for fmt in auto_info:
+                if fmt.get("ext") == "json3":
+                    subtitles = fetch_subtitle_data(fmt["url"])
+                    if subtitles and "events" in subtitles:
+                        segments = [
+                            segment
+                            for entry in subtitles["events"]
+                            if (segment := TranscriptSegment.from_subtitle_entry(entry))
+                            is not None
+                        ]
+                        if segments:
+                            return TranscriptResult(
+                                segments=segments, auto_generated=True, translated=False
+                            )
 
-    for method in transcript_methods:
-        try:
-            transcript = (
-                method.func(method.args).translate(lang_code)
-                if "TRANSLATED" in method.type.name
-                else method.func(method.args)
-            )
-            auto_generated = method.sets_auto
-            translated = method.sets_translated
-            break
-        except Exception:
-            print(f"Did not find {method.type.name.lower()} transcript.")
+        # Finally, try translated captions
+        for lang, subtitle_info in info.get("subtitles", {}).items():
+            if lang != "ja":
+                for fmt in subtitle_info:
+                    if fmt.get("ext") == "json3":
+                        subtitles = fetch_subtitle_data(fmt["url"])
+                        if subtitles and "events" in subtitles:
+                            segments = [
+                                segment
+                                for entry in subtitles["events"]
+                                if (
+                                    segment := TranscriptSegment.from_subtitle_entry(
+                                        entry
+                                    )
+                                )
+                                is not None
+                            ]
+                            if segments:
+                                return TranscriptResult(
+                                    segments=segments,
+                                    auto_generated=False,
+                                    translated=True,
+                                )
 
-    if not transcript:
-        raise ValueError("Something went wrong terribly, this is not a value error")
-
-    segment_dicts = transcript.fetch()
-    print(segment_dicts)
-    segments = [TranscriptSegment.from_dict(seg) for seg in segment_dicts]
-
-    return TranscriptResult(
-        segments=segments,
-        auto_generated=auto_generated,
-        translated=translated,
-    )
+        return None
