@@ -18,13 +18,6 @@ class TranscriptSegment:
         cls, entry: Dict[str, Any]
     ) -> Optional["TranscriptSegment"]:
         try:
-            # TODO: Remove this when I'm confident... :D
-            # Debug print to see the entry structure
-            #
-            # print(
-            #     f"Processing entry: {json.dumps(entry, indent=2, ensure_ascii=False)}"
-            # )
-
             if "segs" in entry:
                 # Handle segmented format
                 text = " ".join(seg["utf8"] for seg in entry["segs"] if "utf8" in seg)

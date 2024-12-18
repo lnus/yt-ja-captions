@@ -1,10 +1,8 @@
+import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import List
-import re
+from typing import List, Set
 
-# TODO: Type ignore is bad, but pyrightconfig.json wasn't registering, too lazy to fix rn
-# Proposed solution: Uninstall pyright :) ruff is such a chill guy
 from fugashi import Tagger  # type: ignore
 
 from captions.fetcher import TranscriptResult
@@ -12,7 +10,6 @@ from captions.fetcher import TranscriptResult
 tagger = Tagger("-Owakati")
 
 
-# TODO: Maybe just use fugashi's, but this interface is easier for my purposes right now
 @dataclass
 class TokenInfo:
     surface: str  # The word as it appears in text
@@ -29,6 +26,34 @@ class SubtitleAnalysis:
     kanji_compound_frequency: Counter
     content_word_frequency: Counter
     tokens: List[TokenInfo]
+    total_words: int
+    unique_words: int
+    hapax_legomena: int  # words used exactly once
+    total_characters: int
+    unique_kanji: Set[str]
+    single_use_kanji: Set[str]
+
+    def get_hapax_percentage(self) -> float:
+        """percentage of words that appear exactly once"""
+        return (
+            (self.hapax_legomena / self.unique_words * 100)
+            if self.unique_words > 0
+            else 0
+        )
+
+    def get_single_use_kanji_percentage(self) -> float:
+        """percentage of kanji that appear exactly once"""
+        return (
+            (len(self.single_use_kanji) / len(self.unique_kanji) * 100)
+            if self.unique_kanji
+            else 0
+        )
+
+    def get_unique_words_percentage(self) -> float:
+        """percentage of unique words relative to total words"""
+        return (
+            (self.unique_words / self.total_words * 100) if self.total_words > 0 else 0
+        )
 
 
 # Helper functions to produce more interesting data than that
@@ -47,6 +72,11 @@ def contains_kanji(text: str) -> bool:
     return any(is_kanji(char) for char in text)
 
 
+def extract_kanji(text: str) -> Set[str]:
+    """Extract all kanji characters from text."""
+    return {char for char in text if is_kanji(char)}
+
+
 # This function was written at 2AM with help from Claude 3.5 Sonnet, it was very helpful
 # I am not very well versed in this type of parsing
 def analyze_subtitles(transcript: TranscriptResult):
@@ -55,24 +85,32 @@ def analyze_subtitles(transcript: TranscriptResult):
     dictionary_freq = Counter()
     kanji_compound_freq = Counter()
     content_word_freq = Counter()
+    kanji_freq = Counter()
+    total_chars = 0
+    all_kanji: Set[str] = set()
     all_tokens: List[TokenInfo] = []
 
     for segment in transcript.segments:
         parsed = tagger(segment.text)
+        total_chars += len(segment.text)
 
         for token in parsed:
-            # Get token features
-            features = [
-                token.feature.pos1,
-                token.feature.pos2,
-                token.feature.pos3,
-                token.feature.pos4,
-                token.feature.cType,
-                token.feature.cForm,
-            ]
+            # Ignore useless (sorry) symbols
+            if token.feature.pos1 in {"記号", "補助記号", "空白"}:
+                continue
 
-            # Filter out None values
-            features = [f for f in features if f]
+            features = [
+                f
+                for f in [
+                    token.feature.pos1,
+                    token.feature.pos2,
+                    token.feature.pos3,
+                    token.feature.pos4,
+                    token.feature.cType,
+                    token.feature.cForm,
+                ]
+                if f
+            ]
 
             token_info = TokenInfo(
                 surface=token.surface,
@@ -81,8 +119,6 @@ def analyze_subtitles(transcript: TranscriptResult):
                 features=features,
             )
 
-            # TODO: Maybe skip punctuation/symbols? Lol
-            # if token.feature.pos1 != "補助記号"
             token_freq[token.surface] += 1
             pos_freq[token.feature.pos1] += 1
             dictionary_freq[token_info.dictionary_form] += 1
@@ -90,10 +126,22 @@ def analyze_subtitles(transcript: TranscriptResult):
             if contains_kanji(token.surface):
                 kanji_compound_freq[token.surface] += 1
 
+                # Extract individual kanji
+                token_kanji = extract_kanji(token.surface)
+                all_kanji.update(token_kanji)
+                for k in token_kanji:
+                    kanji_freq[k] += 1
+
             if is_content_word(token.feature.pos1):
                 content_word_freq[token.surface] += 1
 
             all_tokens.append(token_info)
+
+    # Base metrics
+    total_words = sum(token_freq.values())
+    unique_words = len(token_freq)
+    hapax_words = sum(1 for _, freq in token_freq.items() if freq == 1)
+    single_use_kanji = {k for k, v in kanji_freq.items() if v == 1}
 
     return SubtitleAnalysis(
         token_frequency=token_freq,
@@ -102,4 +150,10 @@ def analyze_subtitles(transcript: TranscriptResult):
         kanji_compound_frequency=kanji_compound_freq,
         content_word_frequency=content_word_freq,
         tokens=all_tokens,
+        total_words=total_words,
+        unique_words=unique_words,
+        hapax_legomena=hapax_words,
+        unique_kanji=all_kanji,
+        single_use_kanji=single_use_kanji,
+        total_characters=total_chars,
     )
