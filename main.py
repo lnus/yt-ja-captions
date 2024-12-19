@@ -1,4 +1,4 @@
-from captions import fetcher, tagger, utils
+from captions import fetcher, tagger, utils, grader
 
 if __name__ == "__main__":
     video_id = "7J5aS_pcBj4"  # V-tubers screaming
@@ -14,4 +14,5 @@ if __name__ == "__main__":
     )
     print("Running tagger")
     analysis = tagger.analyze_subtitles(result)
-    utils.print_analysis(analysis)
+    # utils.print_analysis(analysis)
+    grader.check_joyo(analysis)
