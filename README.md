@@ -1,16 +1,17 @@
-# This doesn't have a name *yet*
+# YouTube Caption Tagger
 
-~~I want to watch YouTube videos with a better
-caption display and some *extra* stuff.~~
-
-I'm actually just going to process the captions for now.
+Caption processing and tagging for YouTube videos with Japanese captions.
 
 ## TO-DO
 
 - [x] Get video metadata and captions
-- [x] Actually make that work ^
-- [ ] Figure out how to store/model data
-- [ ] Add frequency graph for words
-- [ ] Rank words/kanji based on JLPT level
-- [ ] Rank videos based on frequency and difficulty
-- [ ] Write REST API, maybe
+- [x] Extract captions and model to a structure
+- [x] Segment the Japanese text
+- [x] Compute frequency of words
+- [x] Compare kanji against 常用漢字 (Jōyō kanji)
+- [ ] Visualize frequency graph
+- [ ] Visualize other interesting data
+- [ ] Rank words/kanji based on JLPT level (maybe, data is kinda *meh* to find)
+- [ ] Rank entire video captions based on frequency and difficulty
+- [ ] Store the output in a reasonable way
+- [ ] Decide if to make this a package or add a REST API
