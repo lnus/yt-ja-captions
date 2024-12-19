@@ -12,25 +12,22 @@ class TranscriptSegment:
     start: float
     duration: float
 
-    # TODO: This could probably be simplfied
     @classmethod
     def from_subtitle_entry(
         cls, entry: Dict[str, Any]
     ) -> Optional["TranscriptSegment"]:
         try:
-            if "segs" in entry:
-                # Handle segmented format
-                text = " ".join(seg["utf8"] for seg in entry["segs"] if "utf8" in seg)
-                start_time = entry.get("tStartMs", 0) / 1000.0
-                duration = entry.get("dDurationMs", 0) / 1000.0
-            elif "aAppend" in entry:
-                # Skip append entries
+            if "aAppend" in entry:
                 return None
-            else:
-                # Handle standard format
-                text = entry.get("text", "")
-                start_time = entry.get("tStartMs", 0) / 1000.0
-                duration = entry.get("dDurationMs", 0) / 1000.0
+
+            start_time = entry.get("tStartMs", 0) / 1000.0
+            duration = entry.get("dDurationMs", 0) / 1000.0
+
+            text = (
+                " ".join(seg["utf8"] for seg in entry["segs"] if "utf8" in seg)
+                if "segs" in entry
+                else entry.get("text", "")
+            )
 
             return cls(
                 text=text,

@@ -14,5 +14,5 @@ if __name__ == "__main__":
     )
     print("Running tagger")
     analysis = tagger.analyze_subtitles(result)
-    # utils.print_analysis(analysis)
     grader.check_joyo(analysis)
+    utils.print_analysis(analysis, 3)
