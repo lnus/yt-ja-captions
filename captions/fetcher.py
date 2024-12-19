@@ -46,7 +46,6 @@ class TranscriptSegment:
 class TranscriptResult:
     segments: List[TranscriptSegment]
     auto_generated: bool
-    translated: bool
 
 
 def fetch_subtitle_data(url: str) -> Optional[Dict]:
@@ -62,7 +61,6 @@ def fetch_subtitle_data(url: str) -> Optional[Dict]:
 def process_subtitle_formats(
     formats: Sequence[Dict[str, Any]],
     auto_generated: bool = False,
-    translated: bool = False,
 ) -> Optional[TranscriptResult]:
     """
     Process a sequence of subtitle formats and return the first valid TranscriptResult.
@@ -70,7 +68,6 @@ def process_subtitle_formats(
     Args:
         formats: Sequence of subtitle format dictionaries
         auto_generated: Whether these are auto-generated captions
-        translated: Whether these are translated captions
 
     Returns:
         TranscriptResult if valid subtitles are found, None otherwise
@@ -89,7 +86,6 @@ def process_subtitle_formats(
                     return TranscriptResult(
                         segments=segments,
                         auto_generated=auto_generated,
-                        translated=translated,
                     )
     return None
 
@@ -97,7 +93,7 @@ def process_subtitle_formats(
 def get_captions(video_id: str) -> Optional[TranscriptResult]:
     """
     Extract Japanese captions from a YouTube video, preferring manual captions
-    but falling back to auto-generated or translated ones if necessary.
+    but falling back to auto-generated (TODO: or translated ones if necessary).
 
     Args:
         video_id: YouTube video ID
@@ -127,7 +123,7 @@ def get_captions(video_id: str) -> Optional[TranscriptResult]:
             # Try to get manual subtitles first
             if info.get("subtitles") and "ja" in info["subtitles"]:
                 result = process_subtitle_formats(
-                    info["subtitles"]["ja"], auto_generated=False, translated=False
+                    info["subtitles"]["ja"], auto_generated=False
                 )
                 if result:
                     return result
@@ -137,19 +133,14 @@ def get_captions(video_id: str) -> Optional[TranscriptResult]:
                 result = process_subtitle_formats(
                     info["automatic_captions"]["ja"],
                     auto_generated=True,
-                    translated=False,
                 )
                 if result:
                     return result
 
-            # Finally, try translated captions
-            for lang, subtitle_info in info.get("subtitles", {}).items():
-                if lang != "ja":
-                    result = process_subtitle_formats(
-                        subtitle_info, auto_generated=False, translated=True
-                    )
-                    if result:
-                        return result
+            # TODO: Add actual translation fallback here
+            # I can't find a video where this would be needed yet though.
+            # However, if there is an issue with finding captions;
+            # this is probably it.
 
             return None
     except Exception as e:
