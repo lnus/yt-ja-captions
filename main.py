@@ -1,4 +1,6 @@
 from captions import fetcher, tagger, utils, grader
+from visualization import plotting
+from pathlib import Path
 
 if __name__ == "__main__":
     # video_id = "7J5aS_pcBj4"  # V-tubers screaming
@@ -14,3 +16,4 @@ if __name__ == "__main__":
     analysis = tagger.analyze_subtitles(result)
     grader.check_joyo(analysis)
     utils.print_analysis(analysis, 3)
+    plotting.create_visual_plot(analysis, Path("output"))

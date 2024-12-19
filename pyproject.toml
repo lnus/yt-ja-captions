@@ -7,5 +7,6 @@ requires-python = ">=3.12"
 dependencies = [
     "fugashi[unidic-lite]>=1.4.0",
     "matplotlib>=3.9.3",
+    "wordcloud>=1.9.4",
     "yt-dlp>=2024.12.6",
 ]

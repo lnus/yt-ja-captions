@@ -12,3 +12,9 @@ wheels/
 # Json files
 test.json
 jmdict.json
+
+# Font files
+*.ttc
+
+# Output files
+output
